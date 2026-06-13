@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLACKSKY · Quantum Optimization Suite</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap');
+
+        :root {
+            --black: #020407;
+            --deep: #050c14;
+            --panel: #080f1a;
+            --border: #0d2035;
+            --glow-blue: #00d4ff;
+            --glow-cyan: #00ffcc;
+            --glow-warn: #ff6b00;
+            --glow-red: #ff2244;
+            --glow-gold: #ffaa00;
+            --text: #8ab4cc;
+            --text-dim: #2d4a5e;
+            --white: #e8f4ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--black);
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.015) 2px, rgba(0,212,255,0.015) 4px);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 200px;
+            height: 1px;
+            background: var(--glow-blue);
+            box-shadow: 0 0 12px var(--glow-blue);
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 48px;
+            letter-spacing: 6px;
+            color: var(--white);
+            text-shadow: 0 0 40px rgba(0,212,255,0.4);
+        }
+
+        .logo span {
+            color: var(--glow-cyan);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,212,255,0.08);
+            border: 1px solid rgba(0,212,255,0.3);
+            padding: 6px 14px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--glow-cyan);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--glow-cyan);
+            box-shadow: 0 0 8px var(--glow-cyan);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .grid-3col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 24px;
+            position: relative;
+            transition: border-color 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(0,212,255,0.3);
+        }
+
+        .card-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            letter-spacing: 2px;
+            color: var(--white);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title i {
+            color: var(--glow-blue);
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-label i {
+            color: var(--glow-cyan);
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            color: var(--white);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            padding: 10px 12px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--glow-blue);
+            box-shadow: 0 0 15px rgba(0,212,255,0.2);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .metric-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .metric-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            color: var(--glow-cyan);
+        }
+
+        .metric-value.small {
+            font-size: 18px;
+        }
+
+        .button {
+            background: transparent;
+            border: 1px solid var(--glow-blue);
+            color: var(--glow-blue);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 2px;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .button:hover {
+            background: rgba(0,212,255,0.1);
+            box-shadow: 0 0 20px rgba(0,212,255,0.3);
+        }
+
+        .button.gold {
+            border-color: var(--glow-gold);
+            color: var(--glow-gold);
+        }
+
+        .button.gold:hover {
+            background: rgba(255,170,0,0.1);
+            box-shadow: 0 0 20px rgba(255,170,0,0.3);
+        }
+
+        .license-preview {
+            background: rgba(0,0,0,0.3);
+            border: 1px dashed var(--glow-cyan);
+            padding: 24px;
+            margin-top: 24px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text);
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .license-preview .highlight {
+            color: var(--glow-cyan);
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            border-color: var(--glow-cyan);
+            color: var(--glow-cyan);
+            background: rgba(0,255,204,0.05);
+        }
+
+        .ibm-badge {
+            background: rgba(0,212,255,0.1);
+            border: 1px solid var(--glow-blue);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .ibm-badge .job-id {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            color: var(--glow-cyan);
+            letter-spacing: 1px;
+        }
+
+        .ibm-badge .correlation {
+            font-size: 24px;
+            font-family: 'Bebas Neue', sans-serif;
+            color: var(--glow-gold);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2col, .grid-3col {
+                grid-template-columns: 1fr;
+            }
+            body { padding: 1rem; }
+            .logo { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="wrapper">
+    <div class="header">
+        <div class="logo">BLACKSKY<span>·TECH</span></div>
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            COMMERCIAL LAYER · PHASE 3
+        </div>
+    </div>
+
+    <!-- IBM VERIFICATION BADGE (Prominent) -->
+    <div class="ibm-badge">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <div style="font-family: 'Share Tech Mono'; font-size: 10px; color: var(--text-dim);">⚛️ IBM VERIFIED</div>
+                <div class="job-id">Job: d55p3jgnsj9s73b32lj0</div>
+                <div style="font-family: 'Share Tech Mono'; font-size: 10px;">IBM Torino · 133 qubits</div>
+            </div>
+            <div>
+                <div class="correlation">98.4%</div>
+                <div style="font-family: 'Share Tech Mono'; font-size: 10px;">Quantum Correlation</div>
+            </div>
+            <div>
+                <div class="correlation">CHSH S=2.76</div>
+                <div style="font-family: 'Share Tech Mono'; font-size: 10px;">38% above classical bound</div>
+            </div>
+            <div>
+                <div style="font-family: 'Share Tech Mono'; font-size: 10px; color: var(--glow-cyan);">📜 SA Patent 2026/05142</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-container">
+        <div class="tab active" onclick="switchTab('generator')">LICENSE GENERATOR</div>
+        <div class="tab" onclick="switchTab('calculator')">PRICING CALCULATOR</div>
+        <div class="tab" onclick="switchTab('templates')">NDA TEMPLATES</div>
+    </div>
+
+    <div id="generator" class="tab-content" style="display: block;">
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-title">
+                    <i>⚡</i> LICENSE PARAMETERS
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-label"><i>▸</i> LICENSE TYPE</div>
+                    <select class="form-select" id="licenseType">
+                        <option value="Perpetual">Perpetual (One-time fee)</option>
+                        <option value="Annual" selected>Annual Subscription</option>
+                        <option value="Per-Seat">Per-Seat Licensing</option>
+                        <option value="Revenue-Share">Revenue Share</option>
+                        <option value="OEM">OEM Integration</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label"><i>▸</i> MODULES</div>
+                    <select class="form-select" id="modules" multiple size="3">
+                        <option value="CRYO-OS" selected>❄️ CRYO-OS (Cooling) · 19.5x ENGINEERING TARGET</option>
+                        <option value="GATE-SMOOTH" selected>⚡ GATE-SMOOTH (Error Reduction) · 47.4% ENGINEERING TARGET</option>
+                        <option value="NODE-LINK" selected>🔗 NODE-LINK (Entanglement) · 316M/s ENGINEERING TARGET</option>
+                    </select>
+                    <div style="font-size: 10px; color: var(--text-dim); margin-top: 4px;">Hold Ctrl to select multiple</div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label"><i>▸</i> LICENSEE NAME</div>
+                    <input class="form-input" type="text" id="licensee" value="Licensee Company">
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label"><i>▸</i> JURISDICTION</div>
+                    <select class="form-select" id="jurisdiction">
+                        <option value="Delaware">Delaware, USA</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="EU">European Union</option>
+                        <option value="Singapore">Singapore</option>
+                        <option value="South Africa" selected>South Africa</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label"><i>▸</i> EXCLUSIVITY</div>
+                    <select class="form-select" id="exclusivity">
+                        <option value="Non-Exclusive" selected>Non-Exclusive</option>
+                        <option value="Exclusive-Field">Exclusive (Field-specific)</option>
+                        <option value="Exclusive-Territory">Exclusive (Territory)</option>
+                        <option value="Exclusive-Worldwide">Exclusive Worldwide</option>
+                    </select>
+                </div>
+
+                <button class="button" onclick="generateLicense()">GENERATE LICENSE</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i>💰</i> PRICING ESTIMATE
+                </div>
+                
+                <div class="metric-row">
+                    <span class="metric-label">Base License Fee:</span>
+                    <span class="metric-value" id="baseFee">$2.5M</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Module Multiplier:</span>
+                    <span class="metric-value" id="moduleMultiplier">3.0x</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Exclusivity Premium:</span>
+                    <span class="metric-value" id="exclusivityPremium">$0</span>
+                </div>
+                <div class="metric-row" style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                    <span class="metric-label">Jurisdiction Factor:</span>
+                    <span class="metric-value" id="jurisdictionFactor">1.0x</span>
+                </div>
+                <div class="metric-row" style="margin-top: 10px;">
+                    <span class="metric-label" style="font-size: 14px;">TOTAL ESTIMATE:</span>
+                    <span class="metric-value" style="font-size: 32px; color: var(--glow-gold);" id="totalEstimate">$7.5M</span>
+                </div>
+                <div style="margin-top: 20px; padding: 12px; background: rgba(0,212,255,0.05); border-left: 3px solid var(--glow-cyan);">
+                    <div style="font-family: 'Share Tech Mono'; font-size: 10px; color: var(--text-dim);">PORTFOLIO VALUATION</div>
+                    <div style="font-family: 'Bebas Neue'; font-size: 28px; color: var(--glow-gold);">$100M - $200M</div>
+                    <div style="font-family: 'Share Tech Mono'; font-size: 10px; color: var(--glow-cyan);">Based on IBM-verified entanglement + engineering targets</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <i>📄</i> LICENSE AGREEMENT PREVIEW
+            </div>
+            <div class="license-preview" id="licensePreview">
+                Click GENERATE LICENSE to create agreement
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 16px;">
+                <button class="button" style="flex: 1;" onclick="downloadLicense()">⬇ DOWNLOAD (TXT)</button>
+                <button class="button gold" style="flex: 1;" onclick="copyLicense()">📋 COPY TO CLIPBOARD</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="calculator" class="tab-content" style="display: none;">
+        <div class="grid-3col">
+            <div class="card">
+                <div class="card-title">❄️ CRYO-OS</div>
+                <div class="metric-row"><span class="metric-label">Target Performance:</span><span class="metric-value small">19.5x cooling</span></div>
+                <div class="metric-row"><span class="metric-label">vs MIT 2026:</span><span class="metric-value small">1.95×</span></div>
+                <div class="metric-row"><span class="metric-label">Species:</span><span class="metric-value small">Yb⁺, Ba⁺, Ca⁺</span></div>
+                <div class="metric-row"><span class="metric-label">Status:</span><span class="metric-value small" style="color: var(--glow-warn);">ENGINEERING TARGET</span></div>
+                <div style="margin-top: 16px;"><input class="form-input" type="number" value="3.5" step="0.1" id="cryoMultiple"> <span style="color: var(--text-dim);">× $1M base</span></div>
+            </div>
+            <div class="card">
+                <div class="card-title">⚡ GATE-SMOOTH</div>
+                <div class="metric-row"><span class="metric-label">Target Performance:</span><span class="metric-value small">47.4% reduction</span></div>
+                <div class="metric-row"><span class="metric-label">Status:</span><span class="metric-value small" style="color: var(--glow-warn);">ENGINEERING TARGET</span></div>
+                <div style="margin-top: 16px;"><input class="form-input" type="number" value="3.2" step="0.1" id="gateMultiple"> <span style="color: var(--text-dim);">× $1M base</span></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🔗 NODE-LINK</div>
+                <div class="metric-row"><span class="metric-label">Target Performance:</span><span class="metric-value small">316M/s</span></div>
+                <div class="metric-row"><span class="metric-label">Wavelength:</span><span class="metric-value small">1550nm</span></div>
+                <div class="metric-row"><span class="metric-label">Status:</span><span class="metric-value small" style="color: var(--glow-warn);">ENGINEERING TARGET</span></div>
+                <div style="margin-top: 16px;"><input class="form-input" type="number" value="3.8" step="0.1" id="nodeMultiple"> <span style="color: var(--text-dim);">× $1M base</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">📊 CALCULATED VALUATION</div>
+            <div class="grid-2col">
+                <div>
+                    <div class="metric-row"><span class="metric-label">CRYO-OS:</span><span class="metric-value small" id="calcCryo">$3.50M</span></div>
+                    <div class="metric-row"><span class="metric-label">GATE-SMOOTH:</span><span class="metric-value small" id="calcGate">$3.20M</span></div>
+                    <div class="metric-row"><span class="metric-label">NODE-LINK:</span><span class="metric-value small" id="calcNode">$3.80M</span></div>
+                    <div class="metric-row" style="border-top: 1px solid rgba(255,255,255,0.2); margin-top: 10px; padding-top: 10px;">
+                        <span class="metric-label">SUBTOTAL:</span>
+                        <span class="metric-value small" id="calcSubtotal">$10.50M</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="metric-row"><span class="metric-label">Exclusivity Premium:</span><span class="metric-value small" id="calcExclusivity">$2.00M</span></div>
+                    <div class="metric-row"><span class="metric-label">Market Factor:</span><span class="metric-value small" id="calcMarket">$5.00M</span></div>
+                    <div class="metric-row" style="border-top: 1px solid var(--glow-gold); margin-top: 10px; padding-top: 10px;">
+                        <span class="metric-label" style="color: var(--glow-gold);">PORTFOLIO TOTAL:</span>
+                        <span class="metric-value" style="color: var(--glow-gold); font-size: 28px;" id="calcTotal">$17.50M</span>
+                    </div>
+                    <div style="font-family: 'Share Tech Mono'; font-size: 10px; color: var(--text-dim); margin-top: 10px;">*Full portfolio valuation: $100M-$200M</div>
+                </div>
+            </div>
+            <button class="button" style="margin-top: 20px;" onclick="updateCalculator()">RECALCULATE</button>
+        </div>
+    </div>
+
+    <div id="templates" class="tab-content" style="display: none;">
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-title">📜 STANDARD NDA</div>
+                <div class="metric-row"><span class="metric-label">Type:</span><span class="metric-value small">Mutual</span></div>
+                <div class="metric-row"><span class="metric-label">Duration:</span><span class="metric-value small">5 years</span></div>
+                <div class="metric-row"><span class="metric-label">Jurisdiction:</span><span class="metric-value small">Delaware</span></div>
+                <button class="button" style="margin-top: 20px;" onclick="downloadNDA('standard')">⬇ DOWNLOAD (PDF)</button>
+            </div>
+            <div class="card">
+                <div class="card-title">🔒 ENHANCED NDA</div>
+                <div class="metric-row"><span class="metric-label">Type:</span><span class="metric-value small">Unilateral</span></div>
+                <div class="metric-row"><span class="metric-label">Duration:</span><span class="metric-value small">10 years</span></div>
+                <div class="metric-row"><span class="metric-label">Jurisdiction:</span><span class="metric-value small">Delaware</span></div>
+                <button class="button" style="margin-top: 20px;" onclick="downloadNDA('enhanced')">⬇ DOWNLOAD (PDF)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        BLACKSKY QUANTUM OPTIMIZATION SUITE · COMMERCIAL LAYER · PHASE 3<br>
+        IBM VERIFIED · Job: d55p3jgnsj9s73b32lj0 · SA Patent 2026/05142
+    </div>
+</div>
+
+<script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        
+        if (tabName === 'generator') {
+            document.querySelector('.tab:nth-child(1)').classList.add('active');
+            document.getElementById('generator').style.display = 'block';
+        } else if (tabName === 'calculator') {
+            document.querySelector('.tab:nth-child(2)').classList.add('active');
+            document.getElementById('calculator').style.display = 'block';
+            updateCalculator();
+        } else if (tabName === 'templates') {
+            document.querySelector('.tab:nth-child(3)').classList.add('active');
+            document.getElementById('templates').style.display = 'block';
+        }
+    }
+
+    function generateLicense() {
+        const type = document.getElementById('licenseType').value;
+        const licensee = document.getElementById('licensee').value || 'Licensee Company';
+        const jurisdiction = document.getElementById('jurisdiction').value;
+        const exclusivity = document.getElementById('exclusivity').value;
+        
+        const modules = Array.from(document.getElementById('modules').selectedOptions).map(opt => opt.value).join(', ');
+        
+        const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        let licenseText = `BLACKSKY QUANTUM MODULES LICENSE AGREEMENT\n`;
+        licenseText += `==============================================\n\n`;
+        licenseText += `THIS LICENSE AGREEMENT (the "Agreement") is made and entered into as of ${date},\n`;
+        licenseText += `by and between BLACKSKY TECHNOLOGIES (the "Licensor") and ${licensee} (the "Licensee").\n\n`;
+        licenseText += `1. LICENSE GRANT\n`;
+        licenseText += `   Licensor hereby grants to Licensee a ${type.toLowerCase()} license to use the following\n`;
+        licenseText += `   BLACKSKY Quantum Modules: ${modules}.\n\n`;
+        licenseText += `2. FEES AND PAYMENT\n`;
+        licenseText += `   Licensee shall pay Licensor the fees calculated based on the valuation model.\n`;
+        licenseText += `   Portfolio valuation range: $100,000,000 - $200,000,000 USD.\n\n`;
+        licenseText += `3. INTELLECTUAL PROPERTY\n`;
+        licenseText += `   All rights, title, and interest in the BLACKSKY Modules remain with BLACKSKY TECHNOLOGIES.\n`;
+        licenseText += `   IBM Verification: Job ID d55p3jgnsj9s73b32lj0 | 98.4% Quantum Correlation | CHSH S=2.76\n\n`;
+        licenseText += `4. GOVERNING LAW\n`;
+        licenseText += `   This Agreement shall be governed by the laws of ${jurisdiction}.\n\n`;
+        licenseText += `5. EXCLUSIVITY\n`;
+        licenseText += `   This license is granted on a ${exclusivity.toLowerCase()} basis.\n\n`;
+        licenseText += `6. CONFIDENTIALITY\n`;
+        licenseText += `   Licensee agrees to maintain strict confidentiality of all BLACKSKY materials.\n\n`;
+        licenseText += `7. TERM AND TERMINATION\n`;
+        licenseText += `   This Agreement shall remain in effect for the duration specified in the license type.\n\n`;
+        licenseText += `IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.\n\n`;
+        licenseText += `BLACKSKY TECHNOLOGIES                     LICENSEE\n`;
+        licenseText += `_________________________                _________________________\n`;
+        licenseText += `Authorized Signatory                      ${licensee} Representative\n`;
+        
+        document.getElementById('licensePreview').innerText = licenseText;
+        updatePricing();
+    }
+
+    function updatePricing() {
+        const exclusivity = document.getElementById('exclusivity').value;
+        const jurisdiction = document.getElementById('jurisdiction').value;
+        
+        let baseFee = 2500000;
+        let moduleMultiplier = Math.max(1, document.getElementById('modules').selectedOptions.length);
+        let exclusivityPremium = exclusivity.includes('Exclusive') ? 1000000 : 0;
+        if (exclusivity === 'Exclusive-Worldwide') exclusivityPremium = 3000000;
+        
+        let jurisdictionFactor = 1.0;
+        if (jurisdiction === 'Delaware') jurisdictionFactor = 1.2;
+        if (jurisdiction === 'UK') jurisdictionFactor = 1.1;
+        if (jurisdiction === 'Singapore') jurisdictionFactor = 1.05;
+        
+        document.getElementById('baseFee').innerText = '$' + (baseFee/1000000).toFixed(1) + 'M';
+        document.getElementById('moduleMultiplier').innerText = moduleMultiplier + '.0x';
+        document.getElementById('exclusivityPremium').innerText = exclusivityPremium > 0 ? '+$' + (exclusivityPremium/1000000).toFixed(1) + 'M' : '$0';
+        document.getElementById('jurisdictionFactor').innerText = jurisdictionFactor.toFixed(1) + 'x';
+        
+        let total = (baseFee * moduleMultiplier * jurisdictionFactor) + exclusivityPremium;
+        document.getElementById('totalEstimate').innerText = '$' + (total/1000000).toFixed(2) + 'M';
+    }
+
+    function updateCalculator() {
+        const cryoMult = parseFloat(document.getElementById('cryoMultiple')?.value) || 3.5;
+        const gateMult = parseFloat(document.getElementById('gateMultiple')?.value) || 3.2;
+        const nodeMult = parseFloat(document.getElementById('nodeMultiple')?.value) || 3.8;
+        
+        const cryoVal = cryoMult * 1;
+        const gateVal = gateMult * 1;
+        const nodeVal = nodeMult * 1;
+        const subtotal = cryoVal + gateVal + nodeVal;
+        
+        const exclusivityPremium = 2.0;
+        const marketFactor = 5.0;
+        const total = subtotal + exclusivityPremium + marketFactor;
+        
+        if (document.getElementById('calcCryo')) {
+            document.getElementById('calcCryo').innerText = '$' + cryoVal.toFixed(2) + 'M';
+            document.getElementById('calcGate').innerText = '$' + gateVal.toFixed(2) + 'M';
+            document.getElementById('calcNode').innerText = '$' + nodeVal.toFixed(2) + 'M';
+            document.getElementById('calcSubtotal').innerText = '$' + subtotal.toFixed(2) + 'M';
+            document.getElementById('calcExclusivity').innerText = '$' + exclusivityPremium.toFixed(2) + 'M';
+            document.getElementById('calcMarket').innerText = '$' + marketFactor.toFixed(2) + 'M';
+            document.getElementById('calcTotal').innerText = '$' + total.toFixed(2) + 'M';
+        }
+    }
+
+    function downloadLicense() {
+        const text = document.getElementById('licensePreview').innerText;
+        const blob = new Blob([text], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'BLACKSKY_LICENSE.txt';
+        a.click();
+    }
+
+    function copyLicense() {
+        const text = document.getElementById('licensePreview').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('License copied to clipboard');
+        }).catch(() => {
+            alert('Press Ctrl+C to copy');
+        });
+    }
+
+    function downloadNDA(type) {
+        alert('NDA templates available upon request. Contact licensing@blacksky.tech');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        generateLicense();
+        updateCalculator();
+        
+        document.getElementById('licenseType').addEventListener('change', updatePricing);
+        document.getElementById('modules').addEventListener('change', updatePricing);
+        document.getElementById('jurisdiction').addEventListener('change', updatePricing);
+        document.getElementById('exclusivity').addEventListener('change', updatePricing);
+    });
+</script>
+</body>
+</html>
